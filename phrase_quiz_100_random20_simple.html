@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>學測歷屆片語克漏字練習（隨機 20 題）</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fb;
+      color: #333;
+    }
+    .wrapper {
+      max-width: 1100px;
+      margin: 24px auto 32px;
+      padding: 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 26px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+    .primary { background: #2563eb; color: #fff; }
+    .secondary { background: #e5e7eb; color: #111827; }
+    .score-area {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2563eb;
+      margin-left: auto;
+      min-width: 150px;
+      text-align: right;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 12px 0;
+    }
+    .question {
+      padding: 10px 10px;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      margin-bottom: 8px;
+    }
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+    .q-number {
+      font-size: 17px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+    .q-tag {
+      font-size: 11px;
+      color: #6b7280;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #e5e7eb;
+    }
+    .q-text {
+      font-size: 17px;
+      line-height: 1.35;
+      margin-bottom: 6px;
+    }
+    .options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 4px;
+      margin-top: 2px;
+    }
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      background: #fff;
+      border-radius: 999px;
+      padding: 5px 9px;
+      border: 1px solid #e5e7eb;
+      font-size: 15px;
+    }
+    .option-label input[type="radio"] {
+      transform: scale(1.1);
+      accent-color: #2563eb;
+    }
+    #debug {
+      font-size: 13px;
+      color: #059669;
+      margin-bottom: 6px;
+    }
+    #explanations {
+      margin-top: 12px;
+    }
+    .explanation-item {
+      margin-bottom: 8px;
+      padding: 8px 9px;
+      border-radius: 8px;
+      border: 1px dashed #d1d5db;
+      background: #ffffff;
+      font-size: 14px;
+    }
+    .exp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 2px;
+    }
+    .exp-title { font-weight: 600; }
+    .exp-status.correct { color: #16a34a; font-weight: 600; }
+    .exp-status.wrong { color: #dc2626; font-weight: 600; }
+    .exp-status.missing { color: #6b7280; font-weight: 600; }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      margin-top: 3px;
+      background: #e5e7eb;
+      color: #374151;
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="card">
+    <h1>學測歷屆片語克漏字練習</h1>
+    <div class="subtitle">✔ 100 題片語題庫，每次隨機產生 20 題，四選一，自動批改與詳解。</div>
+
+    <div id="debug">✅ JavaScript 已啟動，如果等一下沒有出現題目請再告訴我。</div>
+
+    <div class="controls">
+      <button class="secondary" onclick="newQuiz()">🔄 重新抽題</button>
+      <button class="primary" onclick="gradeQuiz()">✅ 交卷批改</button>
+      <div class="score-area" id="score-area">尚未作答</div>
+    </div>
+
+    <hr>
+
+    <div id="questions"></div>
+    <div id="explanations"></div>
+  </div>
+</div>
+
+<script>
+  // 片語字典
+  var phraseDict = {
+    "in no time": "馬上；立刻",
+    "by all means": "當然可以；請儘管",
+    "get over": "克服；恢復常態",
+    "compete for": "為…而競爭；爭奪",
+    "give way to": "讓路給；讓位於；向…屈服",
+    "make up for": "彌補；補償",
+    "free of": "沒有…；免於…",
+    "long before": "早在…之前",
+    "vary with": "隨…而變",
+    "bring about": "造成；引起",
+    "be accompanied by": "由…陪同；伴隨",
+    "pass through": "通過；經過",
+    "reach for": "伸手去拿",
+    "contrary to": "與…相反",
+    "except for": "除了…之外",
+    "more of": "更像是…；與其說是…不如說是…",
+    "other than": "而不是…；除…之外",
+    "call for": "需要；值得；呼籲",
+    "try out for": "參加（隊伍／劇組）選拔",
+    "set up": "設置；建立",
+    "hang on": "等一下；稍候",
+    "take over": "接管；繼任",
+    "break down": "故障；分解；崩潰",
+    "come after": "追趕；追討",
+    "hold on to": "抓住；緊握；執著於",
+    "watch out for": "留意；小心",
+    "be carried away by": "被…沖昏頭；因…忘形",
+    "build on": "建立在…之上",
+    "cope with": "處理；應付",
+    "get off": "離開；下車；出發",
+    "as a result of": "由於；因為",
+    "in a search for": "在尋找…",
+    "with a view to": "為了…目的；意在…",
+    "to the extent of": "到了…的程度",
+    "shoot out": "射出；伸出",
+    "hold on": "等一下；堅持住",
+    "come across": "偶然遇見；碰到",
+    "give up": "放棄",
+    "as for": "至於",
+    "owing to": "因為；由於",
+    "in spite of": "儘管",
+    "with respect to": "關於；就…而言",
+    "mix up": "混合；搞混",
+    "tear off": "撕掉；扯掉",
+    "result in": "導致；造成",
+    "lead to": "導致；引起",
+    "bring out": "使出現；顯現",
+    "stem from": "源自；起因於",
+    "come to an end": "結束；終止",
+    "go to great lengths": "竭盡全力；不遺餘力",
+    "put in service": "投入使用；啟用",
+    "hold in store": "儲存；等待（將來）",
+    "bring along": "帶…一起來",
+    "turn out": "結果是；證明是",
+    "account for": "佔（數量）；解釋",
+    "serve as": "充當；擔任",
+    "due to": "由於；因為",
+    "nothing but": "只是；只有",
+    "in contrast to": "與…相反",
+    "on behalf of": "代表",
+    "refer to": "提到；參考",
+    "answer for": "對…負責",
+    "take part in": "參加；出席",
+    "put up with": "容忍；忍受",
+    "get away with": "做…而未被懲罰",
+    "clean up after": "善後；收拾…留下的爛攤子",
+    "run out of": "用完；耗盡",
+    "look down upon": "輕視；看不起",
+    "related to": "與…相關",
+    "aside from": "除此之外；除了…之外",
+    "more than": "超過；比…更多；不只是",
+    "in other words": "換句話說",
+    "by no means": "絕不；一點也不",
+    "at any cost": "不惜任何代價；無論如何",
+    "such as": "例如",
+    "regardless of": "不顧；不管",
+    "check out": "去看看；檢查",
+    "look into": "調查；研究",
+    "watch over": "照顧；看守",
+    "see through": "看穿；識破",
+    "be provided with": "被提供…",
+    "far from": "遠遠不；一點也不",
+    "let alone": "更不用說",
+    "get done": "完成；做完",
+    "get lost": "滾開；走開",
+    "make do": "湊合著用；將就",
+    "make believe": "假裝",
+    "at most": "至多；最多",
+    "in contrast": "相較之下；相反地",
+    "out of": "在…之外；缺乏",
+    "as well as": "以及；和…一樣",
+    "in case of": "以防；萬一發生…時",
+    "break off": "中斷；終止",
+    "approve of": "贊成；同意",
+    "engage in": "從事；參與",
+    "get along": "相處融洽",
+    "feel like": "想要…；想做…",
+    "get rid of": "擺脫；去除",
+    "make fun of": "取笑；嘲弄",
+    "take advantage of": "利用；佔便宜"
+  };
+
+  // 100 題題庫
+  var allQuestions = [
+    { id: 1, text: "You can order things on our website and we will deliver them to you ____.", answer: "in no time" },
+    { id: 2, text: "Do you mind if I invite a few friends? “____.”", answer: "by all means" },
+    { id: 3, text: "It took Mary a long time to ____ her ex.", answer: "get over" },
+    { id: 4, text: "Ten teams will ____ one spot to advance to the Koshien.", answer: "compete for" },
+    { id: 5, text: "You have to ____ the ambulance.", answer: "give way to" },
+    { id: 6, text: "The volleyball player’s insane vertical jump ____ his height.", answer: "make up for" },
+    { id: 7, text: "The article is ____ grammar errors after a few revisions.", answer: "free of" },
+    { id: 8, text: "The artist had been making rock and roll music ____ it became mainstream.", answer: "long before" },
+    { id: 9, text: "Average income ____ age, occupation, and industry.", answer: "vary with" },
+    { id: 10, text: "Covid ____ a lot of changes in our society.", answer: "bring about" },
+    { id: 11, text: "The movie star was ____ his bodyguards at the public event.", answer: "be accompanied by" },
+    { id: 12, text: "I ____ the tea shop the other day and found they were selling ice cream.", answer: "pass through" },
+    { id: 13, text: "He stopped the car and ____ the gun in his glove compartment.", answer: "reach for" },
+    { id: 14, text: "____ the popular belief, the author believes that vulnerability is a strength.", answer: "contrary to" },
+    { id: 15, text: "This place is quite cozy ____ the smell.", answer: "except for" },
+    { id: 16, text: "She is ____ an introvert than an extrovert.", answer: "more of" },
+    { id: 17, text: "The round windows were designed for reasons ____ aesthetics.", answer: "other than" },
+    { id: 18, text: "The job does not ____ highly skilled people.", answer: "call for" },
+    { id: 19, text: "Jason ____ the baseball team, but he didn’t make the cut.", answer: "try out for" },
+    { id: 20, text: "Could you please help me ____ the printer?", answer: "set up" },
+    { id: 21, text: "____ a second, let me go check.", answer: "hang on" },
+    { id: 22, text: "Kelly’s son will ____ the shop after she retires.", answer: "take over" },
+    { id: 23, text: "I was late because my car ____ on the way.", answer: "break down" },
+    { id: 24, text: "Jack will be ____ me if I don’t return the money next week.", answer: "come after" },
+    { id: 25, text: "There is no point in ____ someone who doesn’t care about you.", answer: "hold on to" },
+    { id: 26, text: "____ pickpockets when you’re in a crowd.", answer: "watch out for" },
+    { id: 27, text: "He always reminds himself not to be ____ success.", answer: "be carried away by" },
+    { id: 28, text: "Success is ____ good daily habits.", answer: "build on" },
+    { id: 29, text: "Jack found it difficult to ____ two babies at the same time.", answer: "cope with" },
+    { id: 30, text: "We should ____ by 8:00 so that we can catch our flight home.", answer: "get off" },
+    { id: 31, text: "____ the typhoon, the flight is canceled.", answer: "as a result of" },
+    { id: 32, text: "The police officer is ____ the missing watch.", answer: "in a search for" },
+    { id: 33, text: "He studied English hard ____ mastering it quickly.", answer: "with a view to" },
+    { id: 34, text: "Bill loves Ann ____ being willing to die for her.", answer: "to the extent of" },
+    { id: 35, text: "A frog can ____ its tongue, capture an insect, and pull it back.", answer: "shoot out" },
+    { id: 36, text: "____! Let me check my schedule.", answer: "hold on" },
+    { id: 37, text: "I ____ my ex on Tinder yesterday.", answer: "come across" },
+    { id: 38, text: "Most of the students ____ after they have failed the test several times.", answer: "give up" },
+    { id: 39, text: "____ my past, I’m not telling you anything.", answer: "as for" },
+    { id: 40, text: "____ his health problems, John quit his job last month.", answer: "owing to" },
+    { id: 41, text: "She goes to work ____ her back pain.", answer: "in spite of" },
+    { id: 42, text: "It’s going to raise problems ____ water pollution.", answer: "with respect to" },
+    { id: 43, text: "Have you ____ the eggs and the sugar yet?", answer: "mix up" },
+    { id: 44, text: "The tiger ____ the boy’s arm.", answer: "tear off" },
+    { id: 45, text: "The dispute between the two countries ____ war.", answer: "result in" },
+    { id: 46, text: "Smoking ____ bad breath and stained teeth.", answer: "lead to" },
+    { id: 47, text: "Natural disasters can ____ the worst in people.", answer: "bring out" },
+    { id: 48, text: "A lot of relationship issues ____ financial problems.", answer: "stem from" },
+    { id: 49, text: "All good things ____.", answer: "come to an end" },
+    { id: 50, text: "We ____ to make sure you are always comfortable in our hotel.", answer: "go to great lengths" },
+    { id: 51, text: "The warranty starts when the car is ____.", answer: "put in service" },
+    { id: 52, text: "Whatever life ____ me, I will never forget these words.", answer: "hold in store" },
+    { id: 53, text: "Please ____ your family to the party tonight.", answer: "bring along" },
+    { id: 54, text: "The ticket I bought online ____ to be a scam.", answer: "turn out" },
+    { id: 55, text: "African-Americans ____ about 12% of the US population.", answer: "account for" },
+    { id: 56, text: "The box will ____ a table for now.", answer: "serve as" },
+    { id: 57, text: "The match was cancelled ____ the rain.", answer: "due to" },
+    { id: 58, text: "They did ____ argue for two weeks.", answer: "nothing but" },
+    { id: 59, text: "____ his brothers, Tom is rather short.", answer: "in contrast to" },
+    { id: 60, text: "The lawyer spoke ____ his client.", answer: "on behalf of" },
+    { id: 61, text: "The teacher begins the class by ____ a fairytale.", answer: "refer to" },
+    { id: 62, text: "The coach must ____ the team’s poor performance.", answer: "answer for" },
+    { id: 63, text: "Bob refused to ____ the meeting.", answer: "take part in" },
+    { id: 64, text: "I can’t ____ the children’s noise anymore.", answer: "put up with" },
+    { id: 65, text: "The man ____ the robbery and fled to Mexico.", answer: "get away with" },
+    { id: 66, text: "You are an adult. You should learn to ____ yourself.", answer: "clean up after" },
+    { id: 67, text: "He ____ toilet paper, so he used the newspaper instead.", answer: "run out of" },
+    { id: 68, text: "We tend to subconsciously ____ people who make less money than us.", answer: "look down upon" },
+    { id: 69, text: "Most of the popular posts are ____ study methods.", answer: "related to" },
+    { id: 70, text: "____ cartoons, I also love watching movies.", answer: "aside from" },
+    { id: 71, text: "John loves his car ____ anything else.", answer: "more than" },
+    { id: 72, text: "I have to take a bath now. ____, she doesn’t want to talk to you.", answer: "in other words" },
+    { id: 73, text: "He is ____ stupid. He was just playing dumb.", answer: "by no means" },
+    { id: 74, text: "Dave wanted to save his son ____ , even at the risk of his own life.", answer: "at any cost" },
+    { id: 75, text: "The money is used to buy basic foods ____ flour, rice, and pasta.", answer: "such as" },
+    { id: 76, text: "Jane married Will ____ her parents’ objections.", answer: "regardless of" },
+    { id: 77, text: "You can ____ our website for more information.", answer: "check out" },
+    { id: 78, text: "The police said they would ____ my case, but they didn’t call me back.", answer: "look into" },
+    { id: 79, text: "Sandy’s father is home during the day so he can ____ the kids.", answer: "watch over" },
+    { id: 80, text: "Everyone here can ____ his lies. He is not fooling anyone.", answer: "see through" },
+    { id: 81, text: "Many kids are not ____ proper education.", answer: "be provided with" },
+    { id: 82, text: "We finished the project on time, but the boss was ____ satisfied.", answer: "far from" },
+    { id: 83, text: "She doesn’t want to chat with you online, ____ going out with you.", answer: "let alone" },
+    { id: 84, text: "The report has to ____ by the deadline.", answer: "get done" },
+    { id: 85, text: "I won’t buy anything from you, so ____!", answer: "get lost" },
+    { id: 86, text: "I have to ____ with boxes before I buy a new desk.", answer: "make do" },
+    { id: 87, text: "He put on a cloak and ____ he was a superhero.", answer: "make believe" },
+    { id: 88, text: "Our supply can last seven days ____.", answer: "at most" },
+    { id: 89, text: "Tim is tall. ____, his brother is short.", answer: "in contrast" },
+    { id: 90, text: "He threw a party when his parents were ____ town.", answer: "out of" },
+    { id: 91, text: "Tom, ____ his brother, is an outstanding athlete.", answer: "as well as" },
+    { id: 92, text: "She took an umbrella ____ rain.", answer: "in case of" },
+    { id: 93, text: "Frank wants to ____ his relationship with Gina.", answer: "break off" },
+    { id: 94, text: "Peter’s boss doesn’t ____ his plan.", answer: "approve of" },
+    { id: 95, text: "The company is ____ illegal activities.", answer: "engage in" },
+    { id: 96, text: "I can’t ____ with my neighbors.", answer: "get along" },
+    { id: 97, text: "I don’t ____ going out today.", answer: "feel like" },
+    { id: 98, text: "He tried very hard to ____ the cigarette smell on his fingers.", answer: "get rid of" },
+    { id: 99, text: "Don’t ____ people’s accents when they’re trying to speak a foreign language.", answer: "make fun of" },
+    { id: 100, text: "If you want to learn something新, you can ____ resources on the Internet.", answer: "take advantage of" }
+  ];
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function pickRandomOptions(correct) {
+    var allPhrases = Object.keys(phraseDict);
+    var pool = [];
+    for (var i = 0; i < allPhrases.length; i++) {
+      if (allPhrases[i] !== correct) pool.push(allPhrases[i]);
+    }
+    shuffle(pool);
+    var distractors = pool.slice(0, 3);
+    var options = [correct].concat(distractors);
+    shuffle(options);
+    return options;
+  }
+
+  var currentQuestions = [];
+  var currentOptionsMap = {};
+
+  function newQuiz() {
+    var copied = allQuestions.slice();
+    shuffle(copied);
+    currentQuestions = copied.slice(0, 20);
+    renderQuestions();
+  }
+
+  function renderQuestions() {
+    var container = document.getElementById("questions");
+    container.innerHTML = "";
+    currentOptionsMap = {};
+    for (var i = 0; i < currentQuestions.length; i++) {
+      var q = currentQuestions[i];
+      var qDiv = document.createElement("div");
+      qDiv.className = "question";
+
+      var header = document.createElement("div");
+      header.className = "question-header";
+      var numSpan = document.createElement("span");
+      numSpan.className = "q-number";
+      numSpan.textContent = "Q" + (i + 1);
+      var tagSpan = document.createElement("span");
+      tagSpan.className = "q-tag";
+      tagSpan.textContent = "片語克漏字";
+      header.appendChild(numSpan);
+      header.appendChild(tagSpan);
+
+      var textDiv = document.createElement("div");
+      textDiv.className = "q-text";
+      textDiv.textContent = q.text;
+
+      var optionsDiv = document.createElement("div");
+      optionsDiv.className = "options";
+
+      var opts = pickRandomOptions(q.answer);
+      currentOptionsMap[q.id] = opts;
+
+      for (var k = 0; k < opts.length; k++) {
+        var opt = opts[k];
+        var label = document.createElement("label");
+        label.className = "option-label";
+
+        var input = document.createElement("input");
+        input.type = "radio";
+        input.name = "q" + q.id;
+        input.value = opt;
+
+        var span = document.createElement("span");
+        span.textContent = opt;
+
+        label.appendChild(input);
+        label.appendChild(span);
+        optionsDiv.appendChild(label);
+      }
+
+      qDiv.appendChild(header);
+      qDiv.appendChild(textDiv);
+      qDiv.appendChild(optionsDiv);
+      container.appendChild(qDiv);
+    }
+    document.getElementById("explanations").innerHTML = "";
+    document.getElementById("score-area").textContent = "尚未作答";
+  }
+
+  function gradeQuiz() {
+    if (!currentQuestions || currentQuestions.length === 0) return;
+    var correctCount = 0;
+    var explanationsDiv = document.getElementById("explanations");
+    explanationsDiv.innerHTML = "";
+
+    for (var i = 0; i < currentQuestions.length; i++) {
+      var q = currentQuestions[i];
+      var selected = document.querySelector('input[name="q' + q.id + '"]:checked');
+      var userAns = selected ? selected.value : null;
+      var isCorrect = (userAns === q.answer);
+      if (isCorrect) correctCount++;
+
+      var expItem = document.createElement("div");
+      expItem.className = "explanation-item";
+
+      var header = document.createElement("div");
+      header.className = "exp-header";
+
+      var title = document.createElement("div");
+      title.className = "exp-title";
+      title.textContent = "Q" + (i + 1) + " 解答";
+
+      var status = document.createElement("div");
+      status.className = "exp-status";
+      if (!userAns) {
+        status.textContent = "未作答";
+        status.className += " missing";
+      } else if (isCorrect) {
+        status.textContent = "答對 ✅";
+        status.className += " correct";
+      } else {
+        status.textContent = "答錯 ❌";
+        status.className += " wrong";
+      }
+
+      header.appendChild(title);
+      header.appendChild(status);
+
+      var lineSentence = document.createElement("div");
+      lineSentence.textContent = q.text.replace("____", q.answer);
+
+      var lineCorrect = document.createElement("div");
+      var zhCorrect = phraseDict[q.answer] || "";
+      lineCorrect.textContent = "正確片語：" + q.answer + "（" + zhCorrect + "）";
+
+      var lineUser = document.createElement("div");
+      if (!userAns) {
+        lineUser.textContent = "你的作答：未選擇。";
+      } else {
+        var zhUser = phraseDict[userAns] || "";
+        lineUser.textContent = "你的作答：" + userAns + "（" + zhUser + "）";
+      }
+
+      var badge = document.createElement("div");
+      badge.className = "badge";
+      badge.textContent = "四個選項的中文與說明";
+
+      var optsList = document.createElement("div");
+      var opts = currentOptionsMap[q.id] || [];
+      var listText = "";
+      for (var j = 0; j < opts.length; j++) {
+        var o = opts[j];
+        var zh = phraseDict[o] || "";
+        var mark = (o === q.answer) ? "⭐" : "•";
+        listText += mark + " " + o + "：" + zh;
+        if (j !== opts.length - 1) listText += "\n";
+      }
+      optsList.textContent = listText;
+
+      expItem.appendChild(header);
+      expItem.appendChild(lineSentence);
+      expItem.appendChild(lineCorrect);
+      expItem.appendChild(lineUser);
+      expItem.appendChild(badge);
+      expItem.appendChild(optsList);
+      explanationsDiv.appendChild(expItem);
+    }
+
+    document.getElementById("score-area").textContent =
+      "得分：" + correctCount + " / " + currentQuestions.length;
+  }
+
+  // 頁面載入完成就自動抽 20 題
+  window.onload = function() {
+    newQuiz();
+  };
+</script>
+</body>
+</html>
